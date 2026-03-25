@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gestão de Materiais — Manutenção DEXCO</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d0d;--bg2:#161616;--bg3:#1f1f1f;--bg4:#252525;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --text:#f0f0f0;--text2:#888;--text3:#444;
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.1);--blue-b:rgba(59,130,246,0.3);
+  --green:#25d366;--green-dim:rgba(37,211,102,0.08);--green-b:rgba(37,211,102,0.25);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,0.1);--amber-b:rgba(245,158,11,0.3);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);--red-b:rgba(239,68,68,0.3);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,0.1);
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ── LOGIN ── */
+#s-login{align-items:center;justify-content:center;padding:24px;}
+.login-box{width:100%;max-width:360px;}
+.login-logo{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:0.15em;text-align:center;margin-bottom:32px;}
+.login-logo span{display:block;font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px;margin-bottom:4px;}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.role-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:20px 16px;text-align:center;cursor:pointer;transition:all .2s;}
+.role-card:hover{border-color:var(--blue);background:var(--blue-dim);}
+.role-card.active{border-color:var(--blue);background:var(--blue-dim);}
+.role-icon{font-size:28px;margin-bottom:8px;}
+.role-name{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);}
+.role-desc{font-size:11px;color:var(--text2);margin-top:3px;}
+.login-name{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:14px;padding:12px 14px;outline:none;margin-bottom:12px;transition:border-color .15s;}
+.login-name:focus{border-color:var(--blue);}
+.btn-enter{width:100%;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:600;padding:14px;cursor:pointer;transition:all .15s;letter-spacing:0.04em;}
+.btn-enter:hover{background:#2563eb;}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;flex-shrink:0;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.topbar-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.topbar-title{font-family:var(--mono);font-size:12px;font-weight:600;}
+.topbar-sub{font-size:10px;color:var(--text2);margin-top:1px;font-family:var(--mono);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.notif-badge{background:var(--red);color:#fff;font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;display:none;}
+.notif-badge.show{display:inline-block;}
+.btn-logout{background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-family:var(--mono);font-size:10px;padding:5px 10px;cursor:pointer;transition:all .15s;}
+.btn-logout:hover{border-color:var(--red);color:var(--red);}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{flex:1;padding:12px 8px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;position:relative;}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.tab-badge{position:absolute;top:6px;right:calc(50% - 24px);background:var(--red);color:#fff;font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;display:none;}
+.tab-badge.show{display:inline-block;}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:16px;}
+.content.max{max-width:600px;margin:0 auto;}
+
+/* ── CARDS / SECTION ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.card-title{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.card-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── FORM FIELDS ── */
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+label{display:block;font-size:11px;color:var(--text2);font-family:var(--mono);margin-bottom:5px;letter-spacing:0.04em;}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none;}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(59,130,246,0.08);}
+textarea{resize:vertical;min-height:72px;line-height:1.5;}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer;}
+
+/* ── ITEMS TABLE ── */
+.items-header{display:grid;grid-template-columns:1fr 90px 100px 32px;gap:6px;margin-bottom:6px;padding:0 2px;}
+.items-header span{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;}
+.item-row{display:grid;grid-template-columns:1fr 90px 100px 32px;gap:6px;margin-bottom:6px;align-items:center;}
+.item-row input{font-size:13px;padding:8px 10px;}
+.btn-del{width:32px;height:36px;background:var(--red-dim);border:1px solid var(--red-b);border-radius:6px;color:var(--red);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.btn-del:hover{background:rgba(239,68,68,0.2);}
+.btn-add{width:100%;background:transparent;border:1px dashed var(--border2);border-radius:8px;color:var(--text2);font-family:var(--mono);font-size:11px;padding:9px;cursor:pointer;transition:all .15s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-add:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim);}
+
+/* ── URGENCY ── */
+.urgency-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.urg{border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;font-family:var(--mono);font-size:11px;color:var(--text2);}
+.urg-icon{font-size:18px;display:block;margin-bottom:3px;}
+.urg.u-low.sel{border-color:#22c55e;background:rgba(34,197,94,0.08);color:#22c55e;}
+.urg.u-med.sel{border-color:var(--amber);background:var(--amber-dim);color:var(--amber);}
+.urg.u-high.sel{border-color:var(--red);background:var(--red-dim);color:var(--red);}
+
+/* ── SUBMIT BTN ── */
+.btn-primary{width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-family:var(--mono);font-size:13px;font-weight:600;padding:15px;cursor:pointer;transition:all .15s;letter-spacing:0.05em;margin-top:4px;}
+.btn-primary:hover{background:#2563eb;transform:translateY(-1px);}
+.btn-primary:active{transform:scale(.98);}
+.btn-primary.green{background:var(--green);color:#000;}
+.btn-primary.green:hover{background:#1ebd5a;}
+
+/* ── SOLICITATION LIST ── */
+.sol-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:all .2s;}
+.sol-item:hover{border-color:var(--border2);}
+.sol-head{padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;cursor:pointer;}
+.sol-ordem{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text);}
+.sol-desc{font-size:12px;color:var(--text2);margin-top:2px;}
+.sol-meta{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.pill{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 8px;border-radius:20px;letter-spacing:0.06em;}
+.pill-pending{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-b);}
+.pill-approved{background:var(--green-dim);color:var(--green);border:1px solid var(--green-b);}
+.pill-rejected{background:var(--red-dim);color:var(--red);border:1px solid var(--red-b);}
+.pill-urg-low{background:rgba(34,197,94,0.1);color:#22c55e;}
+.pill-urg-med{background:var(--amber-dim);color:var(--amber);}
+.pill-urg-high{background:var(--red-dim);color:var(--red);}
+.sol-body{border-top:1px solid var(--border);padding:12px 14px;display:none;}
+.sol-body.open{display:block;}
+.sol-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;}
+.sol-table th{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;padding:4px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.sol-table td{padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text2);}
+.sol-table td:first-child{color:var(--text);}
+.sol-table tr:last-child td{border-bottom:none;}
+.res-mono{font-family:var(--mono);font-size:11px;color:var(--blue);}
+
+/* ── APPROVE PANEL ── */
+.approve-panel{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-top:10px;}
+.approve-title{font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;}
+.approve-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end;margin-bottom:8px;}
+.approve-row input{font-size:12px;padding:7px 10px;}
+.btn-approve{background:var(--green-dim);border:1px solid var(--green-b);border-radius:6px;color:var(--green);font-family:var(--mono);font-size:11px;font-weight:600;padding:7px 14px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-approve:hover{background:rgba(37,211,102,0.2);}
+.btn-reject{background:var(--red-dim);border:1px solid var(--red-b);border-radius:6px;color:var(--red);font-family:var(--mono);font-size:11px;font-weight:600;padding:7px 14px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-reject:hover{background:rgba(239,68,68,0.2);}
+.feedback-area{display:none;}
+.feedback-area.open{display:block;}
+.feedback-row{display:flex;gap:8px;margin-top:8px;}
+.feedback-row textarea{font-size:12px;min-height:56px;flex:1;}
+.btn-confirm{background:var(--blue-dim);border:1px solid var(--blue-b);border-radius:6px;color:var(--blue);font-family:var(--mono);font-size:11px;font-weight:600;padding:7px 14px;cursor:pointer;transition:all .15s;align-self:flex-end;white-space:nowrap;}
+.btn-confirm:hover{background:rgba(59,130,246,0.2);}
+
+/* ── FEEDBACK DISPLAY ── */
+.feedback-box{background:var(--bg3);border-radius:8px;padding:10px 12px;margin-top:8px;border-left:3px solid;}
+.feedback-box.approved{border-color:var(--green);}
+.feedback-box.rejected{border-color:var(--red);}
+.feedback-label{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
+.feedback-text{font-size:12px;color:var(--text2);line-height:1.5;}
+
+/* ── NOTIF TOAST ── */
+#notif-toast{position:fixed;top:16px;right:16px;left:16px;background:var(--bg2);border:1px solid var(--blue-b);border-radius:var(--r);padding:14px 16px;z-index:100;display:none;animation:slideIn .3s ease;box-shadow:0 4px 24px rgba(0,0,0,0.5);}
+@keyframes slideIn{from{transform:translateY(-20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.toast-title{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--blue);margin-bottom:2px;}
+.toast-body{font-size:12px;color:var(--text2);}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:48px 20px;color:var(--text3);}
+.empty-icon{font-size:36px;margin-bottom:12px;opacity:0.5;}
+.empty-text{font-family:var(--mono);font-size:12px;}
+
+/* ── PUSH BANNER ── */
+#push-banner{background:var(--purple-dim);border:1px solid rgba(167,139,250,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:12px;cursor:pointer;transition:all .15s;}
+#push-banner:hover{background:rgba(167,139,250,0.15);}
+#push-banner span{flex:1;color:var(--purple);}
+.btn-enable-push{background:var(--purple);color:#fff;border:none;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:600;padding:5px 12px;cursor:pointer;white-space:nowrap;}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 10px;text-align:center;}
+.stat-val{font-family:var(--mono);font-size:20px;font-weight:600;line-height:1;}
+.stat-lbl{font-size:10px;color:var(--text2);margin-top:4px;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeIn .25s ease;}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="notif-toast">
+  <div class="toast-title" id="toast-title"></div>
+  <div class="toast-body" id="toast-body"></div>
+</div>
+
+<!-- ══════════ SCREEN: LOGIN ══════════ -->
+<div class="screen active" id="s-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <span>DEXCO</span>
+      GESTÃO DE MATERIAIS · MANUTENÇÃO
+    </div>
+    <div class="role-grid">
+      <div class="role-card active" id="role-tec" onclick="selectRole('tec')">
+        <div class="role-icon">🔧</div>
+        <div class="role-name">Técnico</div>
+        <div class="role-desc">Solicitar materiais</div>
+      </div>
+      <div class="role-card" id="role-apr" onclick="selectRole('apr')">
+        <div class="role-icon">✅</div>
+        <div class="role-name">Aprovador</div>
+        <div class="role-desc">Aprovar solicitações</div>
+      </div>
+    </div>
+    <input class="login-name" type="text" id="login-name" placeholder="Seu nome completo" maxlength="40">
+    <button class="btn-enter" onclick="entrar()">ENTRAR →</button>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: TÉCNICO ══════════ -->
+<div class="screen" id="s-tec">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon" style="background:var(--blue-dim);border:1px solid var(--blue-b);">🔧</div>
+      <div>
+        <div class="topbar-title" id="tec-name-top">Técnico</div>
+        <div class="topbar-sub">SOLICITAÇÕES DE MATERIAL</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="notif-badge" id="tec-notif-badge">0</span>
+      <button class="btn-logout" onclick="logout()">SAIR</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('tec','nova')">Nova solicitação</div>
+    <div class="tab" onclick="showTab('tec','minhas')">Minhas ordens <span class="tab-badge" id="badge-resp">0</span></div>
+  </div>
+
+  <!-- TAB: Nova -->
+  <div class="content max" id="tab-tec-nova">
+
+    <div class="card" style="margin-top:4px;">
+      <div class="card-title">cabeçalho da ordem</div>
+      <div class="field">
+        <label>Número da Ordem SAP *</label>
+        <input type="text" id="t-ordem" placeholder="Ex: 40152707">
+      </div>
+      <div class="field">
+        <label>Descrição do serviço *</label>
+        <input type="text" id="t-desc" placeholder="Ex: Troca de luminárias expedição MP">
+      </div>
+      <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label>Unidade</label>
+          <select id="t-unidade">
+            <option>Metais Jundiaí</option>
+            <option>Louças</option>
+          </select>
+        </div>
+        <div>
+          <label>Local / Área</label>
+          <input type="text" id="t-local" placeholder="Ex: Galpão B">
+        </div>
+      </div>
+      <div class="field">
+        <label>Número da Reserva SAP (se houver)</label>
+        <input type="text" id="t-reserva" placeholder="Ex: 0010012345">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">materiais solicitados</div>
+      <div class="items-header">
+        <span>Descrição / Cód. SAP</span>
+        <span>Qtd</span>
+        <span>Nº Reserva item</span>
+        <span></span>
+      </div>
+      <div id="t-items">
+        <div class="item-row">
+          <input type="text" placeholder="Material ou código SAP">
+          <input type="number" placeholder="0" min="1" style="text-align:center;">
+          <input type="text" placeholder="Reserva item">
+          <button class="btn-del" onclick="delItem(this)">×</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addItem()">+ Adicionar material</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">urgência</div>
+      <div class="urgency-row">
+        <div class="urg u-low" onclick="setUrg('low')"><span class="urg-icon">🟢</span>Normal</div>
+        <div class="urg u-med sel" onclick="setUrg('med')"><span class="urg-icon">🟡</span>Média</div>
+        <div class="urg u-high" onclick="setUrg('high')"><span class="urg-icon">🔴</span>Urgente</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">observações</div>
+      <div class="field">
+        <textarea id="t-obs" placeholder="Prazo necessário, motivo da urgência, impacto na produção..."></textarea>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="enviarSolicitacao()">ENVIAR SOLICITAÇÃO →</button>
+    <div style="height:24px;"></div>
+  </div>
+
+  <!-- TAB: Minhas -->
+  <div class="content max" id="tab-tec-minhas" style="display:none;">
+    <div id="tec-lista"></div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: APROVADOR ══════════ -->
+<div class="screen" id="s-apr">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon" style="background:var(--green-dim);border:1px solid var(--green-b);">✅</div>
+      <div>
+        <div class="topbar-title" id="apr-name-top">Aprovador</div>
+        <div class="topbar-sub">PAINEL DE APROVAÇÃO</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="notif-badge show" id="apr-notif-badge">0</span>
+      <button class="btn-logout" onclick="logout()">SAIR</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('apr','pend')">Pendentes <span class="tab-badge" id="badge-pend">0</span></div>
+    <div class="tab" onclick="showTab('apr','todas')">Todas as ordens</div>
+    <div class="tab" onclick="showTab('apr','stats')">Resumo</div>
+  </div>
+
+  <!-- TAB: Pendentes -->
+  <div class="content max" id="tab-apr-pend">
+    <div id="push-banner" onclick="requestPush()">
+      <span id="push-text">🔔 Ativar notificações push para receber alertas em tempo real</span>
+      <button class="btn-enable-push">ATIVAR</button>
+    </div>
+    <div id="apr-pend-lista"></div>
+  </div>
+
+  <!-- TAB: Todas -->
+  <div class="content max" id="tab-apr-todas" style="display:none;">
+    <div id="apr-todas-lista"></div>
+  </div>
+
+  <!-- TAB: Stats -->
+  <div class="content max" id="tab-apr-stats" style="display:none;">
+    <div class="stats-grid fade-in">
+      <div class="stat"><div class="stat-val" id="st-total">0</div><div class="stat-lbl">Total</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--amber)" id="st-pend">0</div><div class="stat-lbl">Pendentes</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--green)" id="st-aprov">0</div><div class="stat-lbl">Aprovadas</div></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-val" style="color:var(--red)" id="st-rej">0</div><div class="stat-lbl">Rejeitadas</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--red)" id="st-urg">0</div><div class="stat-lbl">Urgentes</div></div>
+      <div class="stat"><div class="stat-val" id="st-itens">0</div><div class="stat-lbl">Itens total</div></div>
+    </div>
+    <div class="card fade-in" id="stats-detail"></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let currentRole = 'tec';
+let currentUser = '';
+let urgSel = 'med';
+let pushEnabled = false;
+let pollInterval = null;
+
+const URG_LABEL = {low:'Normal',med:'Média',high:'URGENTE'};
+const URG_PILL  = {low:'pill-urg-low',med:'pill-urg-med',high:'pill-urg-high'};
+const URG_EMOJI = {low:'🟢',med:'🟡',high:'🔴'};
+
+// ── STORAGE ──
+function getSolicits() { return JSON.parse(localStorage.getItem('dexco_mats')||'[]'); }
+function saveSolicits(d) { localStorage.setItem('dexco_mats', JSON.stringify(d)); }
+function getLastSeen() { return parseInt(localStorage.getItem('dexco_lastseen')||'0'); }
+function setLastSeen() { localStorage.setItem('dexco_lastseen', Date.now().toString()); }
+
+// ── LOGIN ──
+function selectRole(r) {
+  currentRole = r;
+  document.getElementById('role-tec').classList.toggle('active', r==='tec');
+  document.getElementById('role-apr').classList.toggle('active', r==='apr');
+}
+
+function entrar() {
+  const name = document.getElementById('login-name').value.trim();
+  if (!name) { document.getElementById('login-name').focus(); return; }
+  currentUser = name;
+  document.getElementById('s-login').classList.remove('active');
+  if (currentRole === 'tec') {
+    document.getElementById('s-tec').classList.add('active');
+    document.getElementById('tec-name-top').textContent = name;
+    renderTecMinhas();
+    startPolling();
+  } else {
+    document.getElementById('s-apr').classList.add('active');
+    document.getElementById('apr-name-top').textContent = name;
+    renderAprPend();
+    renderStats();
+    startPolling();
+  }
+}
+
+function logout() {
+  clearInterval(pollInterval);
+  document.getElementById('s-tec').classList.remove('active');
+  document.getElementById('s-apr').classList.remove('active');
+  document.getElementById('s-login').classList.add('active');
+  document.getElementById('login-name').value = '';
+}
+
+// ── TABS ──
+function showTab(screen, tab) {
+  const prefix = 'tab-'+screen+'-';
+  document.querySelectorAll('[id^="'+prefix+'"]').forEach(el => {
+    el.style.display = el.id === prefix+tab ? '' : 'none';
+  });
+  const tabs = document.querySelectorAll('#s-'+screen+' .tab');
+  tabs.forEach((t,i) => {
+    const names = screen==='tec' ? ['nova','minhas'] : ['pend','todas','stats'];
+    t.classList.toggle('active', names[i]===tab);
+  });
+  if (screen==='tec' && tab==='minhas') renderTecMinhas();
+  if (screen==='apr' && tab==='pend') renderAprPend();
+  if (screen==='apr' && tab==='todas') renderAprTodas();
+  if (screen==='apr' && tab==='stats') renderStats();
+}
+
+// ── FORM: ITEMS ──
+function addItem() {
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Material ou código SAP">
+    <input type="number" placeholder="0" min="1" style="text-align:center;">
+    <input type="text" placeholder="Reserva item">
+    <button class="btn-del" onclick="delItem(this)">×</button>
+  `;
+  document.getElementById('t-items').appendChild(row);
+  row.querySelector('input').focus();
+}
+function delItem(btn) {
+  const rows = document.querySelectorAll('#t-items .item-row');
+  if (rows.length <= 1) return;
+  btn.closest('.item-row').remove();
+}
+function setUrg(v) {
+  urgSel = v;
+  document.querySelectorAll('.urg').forEach(el => el.classList.remove('sel'));
+  document.querySelector('.urg.u-'+v).classList.add('sel');
+}
+
+// ── ENVIAR SOLICITAÇÃO ──
+function enviarSolicitacao() {
+  const ordem = document.getElementById('t-ordem').value.trim();
+  const desc  = document.getElementById('t-desc').value.trim();
+  if (!ordem || !desc) { toast('⚠️ Atenção','Preencha o número da ordem e a descrição.'); return; }
+
+  const items = [];
+  document.querySelectorAll('#t-items .item-row').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const mat = inputs[0].value.trim();
+    const qty = inputs[1].value.trim();
+    const res = inputs[2].value.trim();
+    if (mat) items.push({ material: mat, quantidade: qty||'–', reserva_item: res||'–' });
+  });
+  if (!items.length) { toast('⚠️ Atenção','Adicione pelo menos um material.'); return; }
+
+  const sol = {
+    id: Date.now(),
+    ordem, desc,
+    unidade: document.getElementById('t-unidade').value,
+    local: document.getElementById('t-local').value.trim(),
+    reserva_cabecalho: document.getElementById('t-reserva').value.trim() || '–',
+    items,
+    urgencia: urgSel,
+    obs: document.getElementById('t-obs').value.trim(),
+    solicitante: currentUser,
+    status: 'pending',
+    criado_em: Date.now(),
+    feedback: '',
+    aprovador: '',
+    respondido_em: null,
+    reservas_aprovacao: []
+  };
+
+  const all = getSolicits();
+  all.unshift(sol);
+  saveSolicits(all);
+
+  // Notify approvers via storage event trick
+  localStorage.setItem('dexco_new_notif', JSON.stringify({ id: sol.id, ts: Date.now(), ordem, solicitante: currentUser }));
+
+  // Push notification (if enabled by this browser as approver)
+  tryPush(`🔧 Nova solicitação — Ordem ${ordem}`, `${currentUser} solicitou ${items.length} material(is). Urgência: ${URG_LABEL[urgSel]}`);
+
+  // Reset form
+  document.getElementById('t-ordem').value = '';
+  document.getElementById('t-desc').value = '';
+  document.getElementById('t-local').value = '';
+  document.getElementById('t-reserva').value = '';
+  document.getElementById('t-obs').value = '';
+  document.getElementById('t-items').innerHTML = `<div class="item-row">
+    <input type="text" placeholder="Material ou código SAP">
+    <input type="number" placeholder="0" min="1" style="text-align:center;">
+    <input type="text" placeholder="Reserva item">
+    <button class="btn-del" onclick="delItem(this)">×</button>
+  </div>`;
+  setUrg('med');
+
+  toast('✅ Enviado!', `Solicitação da Ordem ${ordem} registrada com sucesso.`);
+  showTab('tec','minhas');
+  renderTecMinhas();
+}
+
+// ── RENDER: TÉCNICO — MINHAS ──
+function renderTecMinhas() {
+  const all = getSolicits().filter(s => s.solicitante === currentUser);
+  const el = document.getElementById('tec-lista');
+  const resps = all.filter(s => s.status !== 'pending').length;
+  document.getElementById('badge-resp').textContent = resps;
+  document.getElementById('badge-resp').classList.toggle('show', resps > 0);
+  document.getElementById('tec-notif-badge').textContent = resps;
+  document.getElementById('tec-notif-badge').classList.toggle('show', resps > 0);
+
+  if (!all.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nenhuma solicitação enviada ainda.</div></div>'; return; }
+  el.innerHTML = all.map(s => solCard(s, false)).join('');
+}
+
+// ── RENDER: APROVADOR — PENDENTES ──
+function renderAprPend() {
+  const all = getSolicits().filter(s => s.status === 'pending');
+  const el = document.getElementById('apr-pend-lista');
+  document.getElementById('badge-pend').textContent = all.length;
+  document.getElementById('badge-pend').classList.toggle('show', all.length > 0);
+  document.getElementById('apr-notif-badge').textContent = all.length;
+  if (!all.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🎉</div><div class="empty-text">Nenhuma pendência. Tudo em dia!</div></div>'; return; }
+  el.innerHTML = all.map(s => solCard(s, true)).join('');
+}
+
+function renderAprTodas() {
+  const all = getSolicits();
+  const el = document.getElementById('apr-todas-lista');
+  if (!all.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nenhuma solicitação registrada.</div></div>'; return; }
+  el.innerHTML = all.map(s => solCard(s, s.status==='pending')).join('');
+}
+
+// ── CARD DE SOLICITAÇÃO ──
+function solCard(s, canApprove) {
+  const dt = new Date(s.criado_em).toLocaleDateString('pt-BR') + ' ' + new Date(s.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const statusPill = s.status==='pending' ? 'pill-pending" >PENDENTE' : s.status==='approved' ? 'pill-approved" >APROVADO' : 'pill-rejected" >REJEITADO';
+  const urgPill = URG_PILL[s.urgencia];
+
+  const itemsRows = s.items.map(it => `
+    <tr>
+      <td>${it.material}</td>
+      <td style="text-align:center;">${it.quantidade}</td>
+      <td class="res-mono">${it.reserva_item}</td>
+    </tr>`).join('');
+
+  const reservasCab = s.reservas_aprovacao && s.reservas_aprovacao.length
+    ? `<div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--green);">🔗 Reservas vinculadas: ${s.reservas_aprovacao.join(', ')}</div>`
+    : '';
+
+  const feedbackHtml = s.feedback ? `
+    <div class="feedback-box ${s.status}">
+      <div class="feedback-label" style="color:${s.status==='approved'?'var(--green)':'var(--red)'}">
+        ${s.status==='approved'?'✅ Aprovado':'❌ Rejeitado'} por ${s.aprovador} · ${s.respondido_em ? new Date(s.respondido_em).toLocaleDateString('pt-BR') : ''}
+      </div>
+      <div class="feedback-text">${s.feedback}</div>
+    </div>` : '';
+
+  const approvePanel = canApprove ? `
+    <div class="approve-panel">
+      <div class="approve-title">Responder solicitação</div>
+      <div class="approve-row">
+        <div>
+          <label style="margin-bottom:4px;">Nº Reserva(s) gerada(s) (separar por vírgula)</label>
+          <input type="text" id="res-${s.id}" placeholder="Ex: 0010012345, 0010012346">
+        </div>
+        <button class="btn-approve" onclick="responder(${s.id},'approved')">✅ Aprovar</button>
+        <button class="btn-reject" onclick="showFeedback(${s.id},'rejected')">❌ Rejeitar</button>
+      </div>
+      <div class="feedback-area" id="fb-area-${s.id}">
+        <div class="feedback-row">
+          <textarea id="fb-text-${s.id}" placeholder="Motivo da rejeição ou observação..."></textarea>
+          <button class="btn-confirm" onclick="responder(${s.id},'rejected')">CONFIRMAR</button>
+        </div>
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="sol-item fade-in" id="sol-${s.id}">
+      <div class="sol-head" onclick="toggleSol(${s.id})">
+        <div style="flex:1;min-width:0;">
+          <div class="sol-ordem">Ordem ${s.ordem}</div>
+          <div class="sol-desc">${s.desc}</div>
+          <div class="sol-meta">
+            <span class="pill ${statusPill}</span>
+            <span class="pill ${urgPill}">${URG_EMOJI[s.urgencia]} ${URG_LABEL[s.urgencia]}</span>
+            <span class="pill" style="background:var(--bg3);color:var(--text2);">${s.unidade}</span>
+            <span class="pill" style="background:var(--bg3);color:var(--text2);">${s.items.length} item(s)</span>
+          </div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;">${s.solicitante} · ${dt}</div>
+        </div>
+        <div style="font-size:18px;color:var(--text3);flex-shrink:0;">›</div>
+      </div>
+      <div class="sol-body" id="body-${s.id}">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;font-family:var(--mono);">
+          📍 ${s.local||'–'} &nbsp;|&nbsp; 🔗 Reserva cabeçalho: <span style="color:var(--blue);">${s.reserva_cabecalho}</span>
+        </div>
+        <table class="sol-table">
+          <thead><tr><th>Material / Cód.</th><th style="text-align:center;">Qtd</th><th>Nº Reserva</th></tr></thead>
+          <tbody>${itemsRows}</tbody>
+        </table>
+        ${reservasCab}
+        ${s.obs ? `<div style="font-size:12px;color:var(--text2);background:var(--bg3);border-radius:6px;padding:8px 10px;margin-top:8px;border-left:3px solid var(--border2);">📝 ${s.obs}</div>` : ''}
+        ${feedbackHtml}
+        ${approvePanel}
+      </div>
+    </div>`;
+}
+
+function toggleSol(id) {
+  const b = document.getElementById('body-'+id);
+  b.classList.toggle('open');
+}
+
+// ── APROVAÇÃO ──
+function showFeedback(id, action) {
+  document.getElementById('fb-area-'+id).classList.add('open');
+}
+
+function responder(id, action) {
+  const all = getSolicits();
+  const sol = all.find(s => s.id === id);
+  if (!sol) return;
+
+  const resInput = document.getElementById('res-'+id);
+  const fbInput  = document.getElementById('fb-text-'+id);
+  const reservas = resInput ? resInput.value.trim().split(',').map(r=>r.trim()).filter(Boolean) : [];
+  const fb = fbInput ? fbInput.value.trim() : '';
+
+  if (action==='rejected' && !fb) { toast('⚠️ Atenção','Informe o motivo da rejeição.'); return; }
+
+  sol.status = action;
+  sol.aprovador = currentUser;
+  sol.respondido_em = Date.now();
+  sol.feedback = action==='approved'
+    ? (fb || `Material aprovado. ${reservas.length ? 'Reservas: ' + reservas.join(', ') : 'Retire no almoxarifado.'}`)
+    : fb;
+  sol.reservas_aprovacao = reservas;
+  saveSolicits(all);
+
+  // Notify
+  const emoji = action==='approved'?'✅':'❌';
+  tryPush(`${emoji} Ordem ${sol.ordem} — ${action==='approved'?'Aprovada':'Rejeitada'}`, `${currentUser}: ${sol.feedback.slice(0,80)}`);
+  localStorage.setItem('dexco_resp_notif', JSON.stringify({ id, action, ts: Date.now(), aprovador: currentUser, ordem: sol.ordem }));
+
+  toast(emoji+' Respondido!', `Ordem ${sol.ordem} ${action==='approved'?'aprovada':'rejeitada'}.`);
+  renderAprPend();
+  renderAprTodas();
+  renderStats();
+}
+
+// ── STATS ──
+function renderStats() {
+  const all = getSolicits();
+  const pend = all.filter(s=>s.status==='pending').length;
+  const aprov = all.filter(s=>s.status==='approved').length;
+  const rej = all.filter(s=>s.status==='rejected').length;
+  const urg = all.filter(s=>s.urgencia==='high').length;
+  const itens = all.reduce((acc,s)=>acc+s.items.length,0);
+
+  document.getElementById('st-total').textContent = all.length;
+  document.getElementById('st-pend').textContent = pend;
+  document.getElementById('st-aprov').textContent = aprov;
+  document.getElementById('st-rej').textContent = rej;
+  document.getElementById('st-urg').textContent = urg;
+  document.getElementById('st-itens').textContent = itens;
+
+  // By solicitante
+  const byTec = {};
+  all.forEach(s => {
+    if (!byTec[s.solicitante]) byTec[s.solicitante] = {total:0,pend:0,aprov:0,rej:0};
+    byTec[s.solicitante].total++;
+    if (s.status==='pending') byTec[s.solicitante].pend++;
+    if (s.status==='approved') byTec[s.solicitante].aprov++;
+    if (s.status==='rejected') byTec[s.solicitante].rej++;
+  });
+
+  const rows = Object.entries(byTec).map(([nome,d])=>`
+    <tr>
+      <td>${nome}</td>
+      <td style="text-align:center;">${d.total}</td>
+      <td style="text-align:center;color:var(--amber);">${d.pend}</td>
+      <td style="text-align:center;color:var(--green);">${d.aprov}</td>
+      <td style="text-align:center;color:var(--red);">${d.rej}</td>
+    </tr>`).join('');
+
+  document.getElementById('stats-detail').innerHTML = `
+    <div class="card-title">por solicitante</div>
+    <table class="sol-table">
+      <thead><tr><th>Técnico</th><th style="text-align:center;">Total</th><th style="text-align:center;">Pend.</th><th style="text-align:center;">Aprov.</th><th style="text-align:center;">Rej.</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="5" style="color:var(--text3);text-align:center;">Sem dados</td></tr>'}</tbody>
+    </table>`;
+}
+
+// ── POLLING (simulate real-time via localStorage) ──
+function startPolling() {
+  pollInterval = setInterval(() => {
+    if (currentRole === 'tec') {
+      // Check for responses to my orders
+      const respRaw = localStorage.getItem('dexco_resp_notif');
+      if (respRaw) {
+        try {
+          const resp = JSON.parse(respRaw);
+          const all = getSolicits();
+          const mine = all.find(s => s.id === resp.id && s.solicitante === currentUser);
+          if (mine && resp.ts > getLastSeen()) {
+            const emoji = resp.action==='approved'?'✅':'❌';
+            toast(`${emoji} Ordem ${resp.ordem}`, `${resp.action==='approved'?'Aprovada':'Rejeitada'} por ${resp.aprovador}`);
+            tryPush(`${emoji} Sua solicitação foi respondida`, `Ordem ${resp.ordem} — ${resp.action==='approved'?'Aprovada':'Rejeitada'}`);
+            setLastSeen();
+            renderTecMinhas();
+          }
+        } catch(e){}
+      }
+    } else {
+      // Check for new solicits
+      const newRaw = localStorage.getItem('dexco_new_notif');
+      if (newRaw) {
+        try {
+          const n = JSON.parse(newRaw);
+          if (n.ts > getLastSeen()) {
+            const pend = getSolicits().filter(s=>s.status==='pending').length;
+            document.getElementById('apr-notif-badge').textContent = pend;
+            document.getElementById('badge-pend').textContent = pend;
+            document.getElementById('badge-pend').classList.toggle('show', pend>0);
+            toast(`🔧 Nova solicitação`, `Ordem ${n.ordem} de ${n.solicitante}`);
+            tryPush(`🔧 Nova solicitação recebida`, `Ordem ${n.ordem} — ${n.solicitante}`);
+            setLastSeen();
+            if (document.getElementById('tab-apr-pend').style.display !== 'none') renderAprPend();
+          }
+        } catch(e){}
+      }
+    }
+  }, 3000);
+}
+
+// ── PUSH NOTIFICATIONS ──
+async function requestPush() {
+  if (!('Notification' in window)) { toast('⚠️ Aviso','Seu navegador não suporta notificações push.'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    pushEnabled = true;
+    document.getElementById('push-banner').style.display = 'none';
+    toast('🔔 Ativo!','Você receberá notificações push para novas solicitações.');
+    localStorage.setItem('dexco_push','1');
+  } else {
+    toast('⚠️ Bloqueado','Permissão negada. Habilite nas configurações do navegador.');
+  }
+}
+
+function tryPush(title, body) {
+  if (!pushEnabled && localStorage.getItem('dexco_push')!=='1') return;
+  if (Notification.permission === 'granted') {
+    try { new Notification(title, { body, icon: '' }); } catch(e){}
+  }
+}
+
+// ── TOAST ──
+function toast(title, body) {
+  const el = document.getElementById('notif-toast');
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+// ── INIT ──
+if (localStorage.getItem('dexco_push')==='1' && Notification.permission==='granted') pushEnabled = true;
+if (pushEnabled) document.getElementById('push-banner').style.display = 'none';
+</script>
+</body>
+</html>
